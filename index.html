@@ -11,39 +11,38 @@
     
     <style>
         :root { --primary: #7db249; --bg: #fdf6e3; --card: #ffffff; }
-       body {
-    		font-family: 'Pretendard', sans-serif;
-  		    background-image: url('https://i.postimg.cc/L5djnxms/197cffe21bd4f8151.gif');
-   		    background-repeat: repeat; /* 이미지를 바둑판식으로 반복 */
-  		    background-size: 950px;    /* 패턴 크기 조절 */
-  		    background-attachment: fixed;
-  		    padding: 20px;
-  		    color: #444;
-   		    margin: 0;
-            }
-    
-/* 2. (추가 팁) 계산기 박스를 살짝 투명하게 만들면 더 예쁩니다. .card 부분도 찾아보세요. */
-.card {
-    background: rgba(255, 255, 255, 0.9); /* 90% 투명한 하얀색 */
-    backdrop-filter: blur(5px);          /* 배경을 살짝 흐리게 해서 글자 잘 보이게 */
-    padding: 20px;
-    border-radius: 0 0 15px 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    display: none;
-}
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            margin: 0;
+            padding: 20px;
+            transition: background-image 0.5s ease-in-out;
+        }
+
         .container { max-width: 500px; margin: auto; }
         
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; }
         .tab { flex: 1; padding: 12px 4px; text-align: center; background: #ddd; cursor: pointer; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 0.8em; }
         .tab.active { background: var(--card); color: var(--primary); border-bottom: 3px solid var(--primary); }
         
-        .card { background: var(--card); padding: 20px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: none; }
+        .card {
+            background: rgba(255, 255, 255, 0.9); /* 투명도 적용 */
+            backdrop-filter: blur(5px);
+            padding: 20px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
         .card.active { display: block; }
 
         .pkg-card { border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fafafa; }
         .pkg-name { font-weight: 800; color: #333; margin-bottom: 5px; display: block; }
         .pkg-price-tag { color: var(--primary); font-weight: bold; font-size: 0.9em; }
         .pkg-items { font-size: 0.8em; color: #777; margin-top: 8px; line-height: 1.4; }
+        
         .apply-btn { margin-top: 10px; width: 100%; padding: 8px; background: #fff; border: 1.5px solid var(--primary); color: var(--primary); border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .apply-btn:hover { background: var(--primary); color: #fff; }
 
@@ -51,15 +50,10 @@
         .item-info { display: flex; align-items: center; gap: 10px; flex: 1; }
         .item-icon { width: 32px; height: 32px; object-fit: contain; background: #eee; border-radius: 6px; flex-shrink: 0; }
         .item-name { font-size: 0.95em; font-weight: 600; }
+        
         .input-wrapper { display: flex; align-items: center; gap: 5px; width: 150px; justify-content: flex-end; }
         input { width: 120px; padding: 8px; border: 1.5px solid #eee; border-radius: 6px; text-align: right; font-size: 14px; box-sizing: border-box; }
-        input:read-only { background-color: #f9f9f9; color: #aaa; border-color: #eee; cursor: not-allowed; }
-        .unit { font-size: 0.85em; font-weight: bold; color: #666; width: 25px; text-align: left; }
-
-        .list-header { display: flex; gap: 10px; margin-bottom: 5px; margin-top: 15px; }
-        .header-spacer { flex: 1; }
-        .header-title { width: 120px; text-align: center; margin-right: 30px; font-size: 0.75em; font-weight: bold; color: #999; letter-spacing: 1px; }
-
+        
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn-main { background: var(--primary); color: white; }
         .btn-sub { background: #f0f0f0; color: #666; font-size: 0.85em; }
@@ -97,7 +91,7 @@
             <div class="item-info"><span class="item-name" style="font-size: 1.1em; color: var(--primary);">📦 패키지 가격</span></div>
             <div class="input-wrapper">
                 <input type="number" id="pkg-price" placeholder="0" oninput="saveCurrentPrice()">
-                <span class="unit">원</span>
+                <span class="unit" style="font-size: 0.85em; font-weight: bold; color: #666; margin-left: 5px;">원</span>
             </div>
         </div>
         <div id="item-inputs" style="margin-top:10px;"></div>
@@ -118,9 +112,15 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'trickcal_calc_v9_stable';
+    const STORAGE_KEY = 'trickcal_calc_v10_final';
 
-    // 출시 패키지 (이벤트성)
+    // 배경 이미지 리스트
+    const bgImages = [
+        'https://i.postimg.cc/mDTtqKZg/1772195425.webp',
+        'https://i.postimg.cc/W3shKxpb/1772195425_(2).webp',
+        'https://i.postimg.cc/G2bHN63b/1772195427.webp'
+    ];
+
     const releasedPackages = [
         { name: "아멜리아(R41)의 기쁨 패키지", price: 3300, contents: { p_elif: 100, kcandy: 200, manual: 800, nuru: 3, food_blue: 5 } },
         { name: "아멜리아(R41)의 선포 패키지", price: 3300, contents: { p_elif: 100, scandy: 100, light_box: 200, nuru: 3, food_blue: 5 } },
@@ -128,41 +128,16 @@
         { name: "아멜리아(R41)의 카리스마 패키지", price: 19800, contents: { p_elif: 600, kcandy: 600, scandy: 600, thumbs: 40, gold: 120 } },
         { name: "아멜리아(R41)의 결심 패키지", price: 49500, contents: { p_elif: 1500, f_elif: 1500, cert: 400, kcandy: 1000, scandy: 500 } },
         { name: "아멜리아(R41)의 각오 패키지", price: 49500, contents: { p_elif: 1500, adv_ticket: 1, crayon_highest: 6 } },
-        { name: "아멜리아(R41)의 완벽 패키지", price: 99000, contents: { t_apostle: 100, attr_ticket: 3 } },
+        { name: "아멜리아(R41)의 완벽 패키지", price: 99000, contents: { t_apostle: 100, attr_ticket: 3 } }
     ];
 
-    // [상시 패키지] 요청하신 리스트로 업데이트 완료
     const constantPackages = [
-        { 
-            name: "데일리 엘리프", 
-            price: 9900, 
-            contents: { p_elif: 1500, f_elif: 2000, manual: 2139, r_low: 124 } 
-        },
-        { 
-            name: "데일리 별사탕", 
-            price: 9900, 
-            contents: { scandy: 4460 } 
-        },
-        { 
-            name: "데일리 왕사탕", 
-            price: 5500, 
-            contents: { kcandy: 4850, nuru: 31 } 
-        },
-        { 
-            name: "월간 크레파스 패키지", 
-            price: 29500, 
-            contents: { p_elif: 900, gold: 200, crayon_highest: 4 } 
-        },
-        { 
-            name: "월간 교단 증명서 패키지", 
-            price: 49500, 
-            contents: { p_elif: 1500, f_elif: 1500, cert: 500 } 
-        },
-        {
-            name: "은총 패키지",
-            price: 99000,
-            contents: { p_elif: 6000, crayon_highest: 10, scandy: 500, kcandy: 500 }
-        }
+        { name: "데일리 엘리프", price: 9900, contents: { p_elif: 1500, f_elif: 2000, manual: 2139, r_low: 124 } },
+        { name: "데일리 별사탕", price: 9900, contents: { scandy: 4460 } },
+        { name: "데일리 왕사탕", price: 5500, contents: { kcandy: 4850, nuru: 31 } },
+        { name: "월간 크레파스 패키지", price: 29500, contents: { p_elif: 900, gold: 200, crayon_highest: 4 } },
+        { name: "월간 교단 증명서 패키지", price: 49500, contents: { p_elif: 1500, f_elif: 1500, cert: 500 } },
+        { name: "은총 패키지", price: 99000, contents: { p_elif: 6000, crayon_highest: 10, scandy: 500, kcandy: 500 } }
     ];
 
     const defaultConfig = {
@@ -184,7 +159,7 @@
             { id: 'select_ticket', name: '일반 사도 선택권', val: 2550, icon: 'https://i.postimg.cc/rwkPR9fR/일반선택권.png', count: "" },
             { id: 'attr_ticket', name: '속성 모집권', val: 260, icon: 'https://i.postimg.cc/wTJrBrQ8/속성뽑기권.png', count: "" },
             { id: 'elch_ticket', name: '엘다인 선택권', val: 6800, icon: 'https://i.postimg.cc/YCHsLxdK/선택엘다인.png', count: "" },
-            { id: 'elch_ticket', name: '엘다인 연성권', val: 680, icon: 'https://i.postimg.cc/SKrRbVv9/엘다인_연성권.png', count: "" },
+            { id: 'elch_yeon', name: '엘다인 연성권', val: 680, icon: 'https://i.postimg.cc/SKrRbVv9/엘다인_연성권.png', count: "" },
             { id: 'light_box', name: '무작위 빛 상자', val: 0, icon: 'https://i.postimg.cc/nhJP913L/빛상자.png', count: "" },
             { id: 'food_blue', name: '요리(파랑)', val: 0, icon: 'https://i.postimg.cc/TYmsPsJT/파란랜덤밥.png', count: "" },
             { id: 'food_purple', name: '요리(보라)', val: 0, icon: 'https://i.postimg.cc/FH4BkxDM/보라랜덤밥.png', count: "" },
@@ -195,15 +170,21 @@
             { id: 'r_low', name: '하급 제련석', val: 3, icon: 'https://i.postimg.cc/y8Hb3TL7/하급제련석.png', count: "" },
             { id: 'r_mid', name: '중급 제련석', val: 6, icon: 'https://i.postimg.cc/bwhBSRmz/중급제련석.png', count: "" },
             { id: 'r_high', name: '상급 제련석', val: 13, icon: 'https://i.postimg.cc/qvT56G1v/상급제련석.png', count: "" },
-            { id: 'm_low', name: '하급 마시멜로 선택 상자', val: 0, icon: 'https://i.postimg.cc/52SkBFrt/하급_마시맬로.png', count: "" },
-            { id: 'm_mid', name: '중급 마시멜로 선택 상자', val: 0, icon: 'https://i.postimg.cc/y8yrmSGd/중급마시맬로.png', count: "" },
-            { id: 'm_high', name: '상급 마시멜로 선택 상자', val: 0, icon: 'https://i.postimg.cc/t4jMnzBV/상급마시맬로.png', count: "" },
-            { id: 'm_high', name: '교주의 방 꾸미기 재료 상자', val: 0, icon: 'https://i.postimg.cc/L8pbgVxS/꾸미기상자.png', count: "" },
-            { id: 'm_high', name: '교단 성장 재료 상자', val: 0, icon: 'https://i.postimg.cc/13QjVKv1/교단성장재료상자.png', count: "" }
+            { id: 'm_low', name: '하급 마시멜로', val: 0, icon: 'https://i.postimg.cc/52SkBFrt/하급_마시맬로.png', count: "" },
+            { id: 'm_mid', name: '중급 마시멜로', val: 0, icon: 'https://i.postimg.cc/y8yrmSGd/중급마시맬로.png', count: "" },
+            { id: 'm_high', name: '상급 마시멜로', val: 0, icon: 'https://i.postimg.cc/t4jMnzBV/상급마시맬로.png', count: "" },
+            { id: 'deco_box', name: '방 꾸미기 상자', val: 0, icon: 'https://i.postimg.cc/L8pbgVxS/꾸미기상자.png', count: "" },
+            { id: 'growth_box', name: '교단 성장 상자', val: 0, icon: 'https://i.postimg.cc/13QjVKv1/교단성장재료상자.png', count: "" }
         ]
     };
 
     let config = JSON.parse(JSON.stringify(defaultConfig));
+
+    function applyRandomBackground() {
+        if (bgImages.length === 0) return;
+        const randomIndex = Math.floor(Math.random() * bgImages.length);
+        document.body.style.backgroundImage = `url('${bgImages[randomIndex]}')`;
+    }
 
     function openTab(tabId) {
         document.querySelectorAll('.tab, .card').forEach(el => el.classList.remove('active'));
@@ -239,6 +220,11 @@
     function applyPackage(sourceId, index) {
         const list = sourceId === 'released-list' ? releasedPackages : constantPackages;
         const pkg = list[index];
+
+        // 분석하기 버튼 누르면 배경 GIF로 고정
+        const targetBg = 'https://i.postimg.cc/L5djnxms/197cffe21bd4f8151.gif'; 
+        document.body.style.backgroundImage = `url('${targetBg}')`;
+
         config.price = pkg.price;
         config.items.forEach(item => {
             item.count = pkg.contents[item.id] || "";
@@ -284,7 +270,6 @@
                 });
             }
         }
-        renderPackages('released-list', releasedPackages);
     }
 
     function resetConfig() {
@@ -345,8 +330,11 @@
         navigator.clipboard.writeText(url).then(() => alert("링크가 복사되었습니다."));
     }
 
-    window.onload = loadAll;
+    window.onload = function() {
+        loadAll();
+        applyRandomBackground();
+        renderPackages('released-list', releasedPackages); // 첫 화면 렌더링 추가
+    };
 </script>
 </body>
 </html>
-
