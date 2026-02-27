@@ -5,62 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>트릭컬 효율 계산기</title>
 
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <style>
+input[readonly] {
+    background-color: #f0f0f0 !important; /* 회색 배경 */
+    color: #999 !important; /* 글자색 흐리게 */
+    cursor: not-allowed; /* 금지 표시 커서 */
+    border: 1.5px solid #ddd !important;
+}
         :root { --primary: #7db249; --bg: #fdf6e3; --card: #ffffff; }
-        
         body {
             font-family: 'Pretendard', sans-serif;
             background-size: cover;
             background-attachment: fixed;
             background-position: center;
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
             transition: background-image 0.5s ease-in-out;
         }
-
         .container { max-width: 500px; margin: auto; }
-        
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; }
         .tab { flex: 1; padding: 12px 4px; text-align: center; background: #ddd; cursor: pointer; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 0.8em; }
         .tab.active { background: var(--card); color: var(--primary); border-bottom: 3px solid var(--primary); }
-        
         .card {
-            background: rgba(255, 255, 255, 0.9); /* 투명도 적용 */
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(5px);
-            padding: 20px;
-            border-radius: 0 0 15px 15px;
+            padding: 20px; border-radius: 0 0 15px 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: none;
         }
         .card.active { display: block; }
 
-        .pkg-card { border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fafafa; }
-        .pkg-name { font-weight: 800; color: #333; margin-bottom: 5px; display: block; }
-        .pkg-price-tag { color: var(--primary); font-weight: bold; font-size: 0.9em; }
-        .pkg-items { font-size: 0.8em; color: #777; margin-top: 8px; line-height: 1.4; }
+        .filter-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .search-input { flex: 2; padding: 10px; border: 1.5px solid var(--primary); border-radius: 8px; outline: none; font-size: 14px; }
+        .apostle-select { flex: 1; border: 1.5px solid #ddd; border-radius: 8px; padding: 5px; font-size: 0.85em; cursor: pointer; }
+
+        .pkg-card { border: 1px solid #eee; border-radius: 12px; padding: 18px; margin-bottom: 18px; background: #fafafa; }
+        .pkg-name { font-weight: 800; color: #333; margin-bottom: 5px; display: block; font-size: 1.05em; }
+        .pkg-price-tag { color: var(--primary); font-weight: bold; font-size: 1em; display: block; margin-bottom: 8px; }
+        .pkg-items { font-size: 0.85em; color: #666; margin-top: 10px; line-height: 1.5; background: #f0f0f0; padding: 10px; border-radius: 8px; }
         
-        .apply-btn { margin-top: 10px; width: 100%; padding: 8px; background: #fff; border: 1.5px solid var(--primary); color: var(--primary); border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .eff-badge { 
+            display: inline-block; 
+            background: #e8f5e9; 
+            color: #2e7d32; 
+            padding: 5px 10px; 
+            border-radius: 6px; 
+            font-size: 0.85em; 
+            font-weight: bold; 
+            border: 1px solid #c8e6c9;
+            margin-bottom: 10px;
+        }
+
+        .apply-btn { margin-top: 15px; width: 100%; padding: 10px; background: #fff; border: 1.5px solid var(--primary); color: var(--primary); border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .apply-btn:hover { background: var(--primary); color: #fff; }
 
         .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .item-info { display: flex; align-items: center; gap: 10px; flex: 1; }
         .item-icon { width: 32px; height: 32px; object-fit: contain; background: #eee; border-radius: 6px; flex-shrink: 0; }
         .item-name { font-size: 0.95em; font-weight: 600; }
-        
         .input-wrapper { display: flex; align-items: center; gap: 5px; width: 150px; justify-content: flex-end; }
-        input { width: 120px; padding: 8px; border: 1.5px solid #eee; border-radius: 6px; text-align: right; font-size: 14px; box-sizing: border-box; }
-        
+        input[type="number"] { width: 120px; padding: 8px; border: 1.5px solid #eee; border-radius: 6px; text-align: right; font-size: 14px; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn-main { background: var(--primary); color: white; }
         .btn-sub { background: #f0f0f0; color: #666; font-size: 0.85em; }
-        
-        .reset-container { display: flex; justify-content: flex-end; margin-top: 20px; }
-        .btn-reset { padding: 8px 15px; background: #ffebf0; color: #e91e63; font-size: 0.8em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
-
         #result { margin-top: 20px; padding: 20px; border-radius: 12px; text-align: center; display: none; background: #f8f9fa; border: 1px solid #e9ecef; }
         .result-val { font-size: 2.2em; font-weight: 800; color: var(--primary); margin: 5px 0; }
         .small-text { font-size: 0.8em; color: #888; margin-bottom: 5px; }
@@ -77,22 +86,35 @@
     </div>
 
     <div id="preset" class="card active">
-        <p class="small-text">매주 업데이트되는 한정/이벤트 패키지입니다.</p>
+        <div class="filter-container">
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="pkg-search" class="search-input" placeholder="패키지 또는 사도 검색..." oninput="filterReleased()">
+                <select id="apostle-select" class="apostle-select" onchange="filterReleased()">
+                    <option value="all">전체 사도</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="sort-type" class="apostle-select" onchange="filterReleased()" style="flex: 1;">
+                    <option value="price">가격 기준</option>
+                    <option value="score">효율 점수 기준</option>
+                </select>
+                <select id="sort-order" class="apostle-select" onchange="filterReleased()" style="flex: 1;">
+                    <option value="asc">오름차순 (낮은순)</option>
+                    <option value="desc">내림차순 (높은순)</option>
+                </select>
+            </div>
+        </div>
         <div id="released-list"></div>
     </div>
 
     <div id="constant" class="card">
-        <p class="small-text">데일리/월간 등 꾸준히 판매되는 패키지입니다.</p>
         <div id="constant-list"></div>
     </div>
 
     <div id="calc" class="card">
         <div class="row">
             <div class="item-info"><span class="item-name" style="font-size: 1.1em; color: var(--primary);">📦 패키지 가격</span></div>
-            <div class="input-wrapper">
-                <input type="number" id="pkg-price" placeholder="0" oninput="saveCurrentPrice()">
-                <span class="unit" style="font-size: 0.85em; font-weight: bold; color: #666; margin-left: 5px;">원</span>
-            </div>
+            <div class="input-wrapper"><input type="number" id="pkg-price" placeholder="0" oninput="saveCurrentPrice()"><span>원</span></div>
         </div>
         <div id="item-inputs" style="margin-top:10px;"></div>
         <button class="btn btn-main" onclick="calculate()">효율 계산하기</button>
@@ -104,33 +126,30 @@
     </div>
 
     <div id="settings" class="card">
-        <p class="small-text">무료 엘리프를 기준으로 가치를 설정합니다.</p>
         <div id="settings-list"></div>
         <button class="btn btn-sub" onclick="copyShareLink()">🔗 설정 공유 링크 복사</button>
-        <div class="reset-container"><button class="btn-reset" onclick="resetConfig()">⚠️ 기본 설정으로 초기화</button></div>
+        <div style="text-align: right; margin-top: 20px;"><button style="color: #e91e63; border: none; background: none; cursor: pointer; font-weight: bold;" onclick="resetConfig()">⚠️ 초기화</button></div>
     </div>
 </div>
 
 <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDSu0rmCC6S5Wa82X1ITHAFFfzwChQjLO8",
+        authDomain: "trickcal-calc.firebaseapp.com",
+        projectId: "trickcal-calc",
+        storageBucket: "trickcal-calc.firebasestorage.app",
+        messagingSenderId: "138255593289",
+        appId: "1:138255593289:web:110381aad65cf8b3b53498",
+        measurementId: "G-X4MLP8ZXLV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     const STORAGE_KEY = 'trickcal_calc_v10_final';
+    let dbPackages = []; 
 
-    // 배경 이미지 리스트
-    const bgImages = [
-        'https://i.postimg.cc/mDTtqKZg/1772195425.webp',
-        'https://i.postimg.cc/W3shKxpb/1772195425_(2).webp',
-        'https://i.postimg.cc/G2bHN63b/1772195427.webp'
-    ];
-
-    const releasedPackages = [
-        { name: "아멜리아(R41)의 기쁨 패키지", price: 3300, contents: { p_elif: 100, kcandy: 200, manual: 800, nuru: 3, food_blue: 5 } },
-        { name: "아멜리아(R41)의 선포 패키지", price: 3300, contents: { p_elif: 100, scandy: 100, light_box: 200, nuru: 3, food_blue: 5 } },
-        { name: "아멜리아(R41)의 희열 패키지", price: 9900, contents: { p_elif: 300, t_apostle: 10, t_card: 10 } },
-        { name: "아멜리아(R41)의 카리스마 패키지", price: 19800, contents: { p_elif: 600, kcandy: 600, scandy: 600, thumbs: 40, gold: 120 } },
-        { name: "아멜리아(R41)의 결심 패키지", price: 49500, contents: { p_elif: 1500, f_elif: 1500, cert: 400, kcandy: 1000, scandy: 500 } },
-        { name: "아멜리아(R41)의 각오 패키지", price: 49500, contents: { p_elif: 1500, adv_ticket: 1, crayon_highest: 6 } },
-        { name: "아멜리아(R41)의 완벽 패키지", price: 99000, contents: { t_apostle: 100, attr_ticket: 3 } }
-    ];
-
+    // 상시 패키지 리스트
     const constantPackages = [
         { name: "데일리 엘리프", price: 9900, contents: { p_elif: 1500, f_elif: 2000, manual: 2139, r_low: 124 } },
         { name: "데일리 별사탕", price: 9900, contents: { scandy: 4460 } },
@@ -140,6 +159,7 @@
         { name: "은총 패키지", price: 99000, contents: { p_elif: 6000, crayon_highest: 10, scandy: 500, kcandy: 500 } }
     ];
 
+    // [전체 부활] 아이템 32종 풀세트
     const defaultConfig = {
         price: 0,
         items: [
@@ -180,160 +200,183 @@
 
     let config = JSON.parse(JSON.stringify(defaultConfig));
 
-    function applyRandomBackground() {
-        if (bgImages.length === 0) return;
-        const randomIndex = Math.floor(Math.random() * bgImages.length);
-        document.body.style.backgroundImage = `url('${bgImages[randomIndex]}')`;
+    async function loadReleasedPackages() {
+        const listDiv = document.getElementById('released-list');
+        listDiv.innerHTML = "<p style='text-align:center; padding: 20px; color: #888;'>데이터 로드 중...</p>";
+        try {
+            const snapshot = await db.collection("packages").get();
+            dbPackages = [];
+            const apostleSet = new Set();
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const contents = typeof data.contents === 'string' ? JSON.parse(data.contents) : data.contents;
+                dbPackages.push({ id: doc.id, ...data, contents, releasedApostle: data.releasedApostle || "기타" });
+                apostleSet.add(data.releasedApostle || "기타");
+            });
+            const select = document.getElementById('apostle-select');
+            select.innerHTML = '<option value="all">전체 사도</option>';
+            Array.from(apostleSet).sort().forEach(name => {
+                const opt = document.createElement('option'); opt.value = name; opt.innerText = name; select.appendChild(opt);
+            });
+            filterReleased();
+        } catch (e) { console.error(e); listDiv.innerHTML = "<p>로드 실패</p>"; }
     }
 
-    function openTab(tabId) {
-        document.querySelectorAll('.tab, .card').forEach(el => el.classList.remove('active'));
-        const targetTab = document.querySelector(`.tab[onclick="openTab('${tabId}')"]`);
-        if(targetTab) targetTab.classList.add('active');
-        document.getElementById(tabId).classList.add('active');
-        
-        if(tabId === 'calc') renderCalc();
-        if(tabId === 'settings') renderSettings();
-        if(tabId === 'preset') renderPackages('released-list', releasedPackages);
-        if(tabId === 'constant') renderPackages('constant-list', constantPackages);
+    function filterReleased() {
+        const query = document.getElementById('pkg-search').value.toLowerCase();
+        const apostle = document.getElementById('apostle-select').value;
+        const type = document.getElementById('sort-type').value;
+        const order = document.getElementById('sort-order').value;
+
+        let filtered = dbPackages.filter(p => {
+            return (p.name.toLowerCase().includes(query) || p.releasedApostle.toLowerCase().includes(query)) && 
+                   (apostle === "all" || p.releasedApostle === apostle);
+        });
+
+        filtered.sort((a, b) => {
+            let vA = (type === 'price') ? a.price : calculateScore(a.contents, a.price);
+            let vB = (type === 'price') ? b.price : calculateScore(b.contents, b.price);
+            return (order === 'asc') ? vA - vB : vB - vA;
+        });
+        renderPackageList('released-list', filtered);
     }
 
-    function renderPackages(containerId, packageList) {
-        const list = document.getElementById(containerId);
-        list.innerHTML = packageList.map((pkg, index) => {
+    function calculateScore(contents, price) {
+        if (!price || price <= 0) return 0;
+        let total = 0;
+        Object.entries(contents).forEach(([id, count]) => {
+            const item = config.items.find(i => i.id === id);
+            if (item) total += count * item.val;
+        });
+        return (total / price) * 1000;
+    }
+
+    function renderPackageList(containerId, list) {
+        const div = document.getElementById(containerId);
+        div.innerHTML = list.map(pkg => {
+            const score = calculateScore(pkg.contents, pkg.price).toFixed(1);
             const summary = Object.entries(pkg.contents).map(([id, count]) => {
                 const item = config.items.find(i => i.id === id);
                 return `${item ? item.name : id} x${count}`;
             }).join(', ');
+            return `
+                <div class="pkg-card">
+                    <span class="pkg-name">[${pkg.releasedApostle}] ${pkg.name}</span>
+                    <span class="pkg-price-tag">${pkg.price.toLocaleString()}원</span>
+                    <div><span class="eff-badge">효율 점수 : ${score}</span></div>
+                    <div class="pkg-items">${summary}</div>
+                    <button class="apply-btn" onclick="applyPackageData('${containerId}', '${pkg.id}')">이 구성으로 분석하기</button>
+                </div>`;
+        }).join('');
+    }
 
+    function applyPackageData(sourceId, pkgId) {
+        const pkg = (sourceId === 'released-list') ? dbPackages.find(p => p.id === pkgId) : constantPackages[pkgId];
+        if(!pkg) return;
+        document.body.style.backgroundImage = "url('https://i.postimg.cc/L5djnxms/197cffe21bd4f8151.gif')";
+        config.price = pkg.price;
+        config.items.forEach(item => { item.count = pkg.contents[item.id] || ""; });
+        openTab('calc'); calculate();
+    }
+
+    function openTab(id) {
+        document.querySelectorAll('.tab, .card').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.tab[onclick="openTab('${id}')"]`).classList.add('active');
+        document.getElementById(id).classList.add('active');
+        if(id === 'calc') renderCalc();
+        if(id === 'settings') renderSettings();
+        if(id === 'constant') renderConstantPackages();
+    }
+
+    function renderCalc() {
+    document.getElementById('pkg-price').value = config.price;
+    document.getElementById('item-inputs').innerHTML = config.items.map(item => `
+        <div class="row">
+            <div class="item-info">
+                <img src="${item.icon}" class="item-icon">
+                <span class="item-name">${item.name}</span>
+            </div>
+            <div class="input-wrapper">
+                <input type="number" id="cnt-${item.id}" value="${item.count}" oninput="saveInputs()" 
+                ${(item.id === 'f_elif' && item.fixed) ? 'readonly' : ''}>
+            </div>
+        </div>`).join('');
+}
+
+    function calculate() {
+        const price = parseFloat(document.getElementById('pkg-price').value);
+        if(!price) return;
+        let total = 0;
+        config.items.forEach(item => {
+            const count = parseFloat(document.getElementById(`cnt-${item.id}`).value) || 0;
+            total += count * item.val;
+        });
+        const rate = (total / price) * 1000;
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('res-rate').innerText = `${rate.toFixed(1)}개`;
+        document.getElementById('res-total').innerText = `(환산: ${total.toLocaleString()}개)`;
+    }
+
+    function saveInputs() { config.items.forEach(item => { const input = document.getElementById(`cnt-${item.id}`); if(input) item.count = input.value; }); }
+    function saveCurrentPrice() { config.price = document.getElementById('pkg-price').value; }
+
+    function renderSettings() {
+        document.getElementById('settings-list').innerHTML = config.items.map(item => `
+            <div class="row">
+                <div class="item-info"><img src="${item.icon}" class="item-icon"><span class="item-name">${item.name}</span></div>
+                <div class="input-wrapper"><input type="number" id="val-${item.id}" value="${item.val}" step="0.1" ${item.fixed?'readonly':''} oninput="saveSettings()"></div>
+            </div>`).join('');
+    }
+
+    function saveSettings() {
+        config.items.forEach(item => { const input = document.getElementById(`val-${item.id}`); if(input) item.val = parseFloat(input.value) || 0; });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        filterReleased(); renderConstantPackages();
+    }
+
+    function renderConstantPackages() {
+        const listDiv = document.getElementById('constant-list');
+        listDiv.innerHTML = constantPackages.map((pkg, index) => {
+            const summary = Object.entries(pkg.contents).map(([id, count]) => {
+                const item = config.items.find(i => i.id === id);
+                return `${item ? item.name : id} x${count}`;
+            }).join(', ');
             return `
                 <div class="pkg-card">
                     <span class="pkg-name">${pkg.name}</span>
                     <span class="pkg-price-tag">${pkg.price.toLocaleString()}원</span>
                     <div class="pkg-items">${summary}</div>
-                    <button class="apply-btn" onclick="applyPackage('${containerId}', ${index})">이 구성으로 분석하기</button>
-                </div>
-            `;
+                    <button class="apply-btn" onclick="applyPackageData('constant-list', ${index})">이 구성으로 분석하기</button>
+                </div>`;
         }).join('');
     }
 
-    function applyPackage(sourceId, index) {
-        const list = sourceId === 'released-list' ? releasedPackages : constantPackages;
-        const pkg = list[index];
-
-        // 분석하기 버튼 누르면 배경 GIF로 고정
-        const targetBg = 'https://i.postimg.cc/L5djnxms/197cffe21bd4f8151.gif'; 
-        document.body.style.backgroundImage = `url('${targetBg}')`;
-
-        config.price = pkg.price;
-        config.items.forEach(item => {
-            item.count = pkg.contents[item.id] || "";
-        });
-        openTab('calc');
-        calculate();
-    }
-
-    function saveCurrentInputs() {
-        config.items.forEach(item => {
-            const input = document.getElementById(`cnt-${item.id}`);
-            if(input) item.count = input.value;
-        });
-    }
-
-    function saveCurrentPrice() {
-        const priceInput = document.getElementById('pkg-price');
-        if(priceInput) config.price = priceInput.value;
-    }
-
-    function saveAllSettings() {
-        config.items.forEach(item => {
-            if (!item.fixed) {
-                const input = document.getElementById(`val-${item.id}`);
-                if(input) item.val = parseFloat(input.value) || 0;
-            }
-        });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    }
-
     function loadAll() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const data = urlParams.get('v');
-        if(data) {
-            try { config = JSON.parse(decodeURIComponent(data)); } catch(e) {}
-        } else {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if(saved) {
-                const parsedSaved = JSON.parse(saved);
-                config.items = config.items.map(item => {
-                    const savedItem = parsedSaved.items.find(si => si.id === item.id);
-                    return savedItem ? { ...item, val: savedItem.val } : item;
-                });
-            }
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if(saved) {
+            const parsed = JSON.parse(saved);
+            config.items = config.items.map(item => {
+                const s = parsed.items.find(si => si.id === item.id);
+                return s ? { ...item, val: s.val } : item;
+            });
         }
     }
 
-    function resetConfig() {
-        if(confirm("모든 설정을 기본값으로 초기화하시겠습니까?")) {
-            localStorage.removeItem(STORAGE_KEY);
-            config = JSON.parse(JSON.stringify(defaultConfig));
-            renderSettings();
-            alert("초기화되었습니다.");
-        }
+    function applyRandomBackground() {
+        const bgs = ['https://i.postimg.cc/mDTtqKZg/1772195425.webp', 'https://i.postimg.cc/W3shKxpb/1772195425_(2).webp'];
+        document.body.style.backgroundImage = `url('${bgs[Math.floor(Math.random()*bgs.length)]}')`;
     }
 
-    function createRowHtml(item, type) {
-        const inputId = type === 'val' ? `val-${item.id}` : `cnt-${item.id}`;
-        const valueAttr = type === 'val' ? `value="${item.val}"` : `value="${item.count || ''}"`;
-        const onInput = type === 'val' ? 'oninput="saveAllSettings()"' : 'oninput="saveCurrentInputs()"';
-        const readonly = (type === 'val' && item.fixed) ? 'readonly' : '';
-
-        return `
-            <div class="row">
-                <div class="item-info">
-                    <img src="${item.icon || 'https://via.placeholder.com/32'}" class="item-icon">
-                    <span class="item-name">${item.name}</span>
-                </div>
-                <div class="input-wrapper">
-                    <input type="number" id="${inputId}" ${valueAttr} step="0.001" ${onInput} ${readonly} placeholder="0">
-                </div>
-            </div>
-        `;
-    }
-
-    function renderSettings() {
-        document.getElementById('settings-list').innerHTML = config.items.map(item => createRowHtml(item, 'val')).join('');
-    }
-
-    function renderCalc() {
-        document.getElementById('pkg-price').value = config.price || "";
-        document.getElementById('item-inputs').innerHTML = config.items.map(item => createRowHtml(item, 'cnt')).join('');
-    }
-
-    function calculate() {
-        const price = parseFloat(document.getElementById('pkg-price').value);
-        if(!price || price <= 0) { alert("패키지 가격을 입력해주세요."); return; }
-        let totalElif = 0;
-        config.items.forEach(item => {
-            const input = document.getElementById(`cnt-${item.id}`);
-            const count = input ? parseFloat(input.value) : 0;
-            totalElif += (isNaN(count) ? 0 : count) * item.val;
-        });
-        const ratePer1000 = (totalElif / price) * 1000;
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('res-rate').innerText = `${ratePer1000.toFixed(1)}개`;
-        document.getElementById('res-total').innerText = `(총 엘리프 환산: ${totalElif.toLocaleString()}개)`;
-    }
-
-    function copyShareLink() {
+    function resetConfig() { if(confirm("기본 설정으로 초기화 하시겠습니까?")) { localStorage.removeItem(STORAGE_KEY); location.reload(); } }
+    function copyShareLink() { 
         const data = encodeURIComponent(JSON.stringify(config));
         const url = `${window.location.origin}${window.location.pathname}?v=${data}`;
-        navigator.clipboard.writeText(url).then(() => alert("링크가 복사되었습니다."));
+        navigator.clipboard.writeText(url).then(() => alert("설정 링크 복사 완료!"));
     }
 
     window.onload = function() {
-        loadAll();
-        applyRandomBackground();
-        renderPackages('released-list', releasedPackages); // 첫 화면 렌더링 추가
+        loadAll(); applyRandomBackground();
+        loadReleasedPackages(); renderConstantPackages();
     };
 </script>
 </body>
