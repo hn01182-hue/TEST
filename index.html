@@ -9,8 +9,8 @@
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); padding: 20px; color: #444; }
         .container { max-width: 500px; margin: auto; }
         
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-        .tab { flex: 1; padding: 12px 8px; text-align: center; background: #ddd; cursor: pointer; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 0.85em; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 12px 4px; text-align: center; background: #ddd; cursor: pointer; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 0.8em; }
         .tab.active { background: var(--card); color: var(--primary); border-bottom: 3px solid var(--primary); }
         
         .card { background: var(--card); padding: 20px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: none; }
@@ -53,13 +53,19 @@
 <div class="container">
     <div class="tabs">
         <div class="tab active" onclick="openTab('preset')">🎁 출시 패키지</div>
-        <div class="tab" onclick="openTab('calc')">📊 패키지 분석</div>
-        <div class="tab" onclick="openTab('settings')">⚙️ 가치 설정</div>
+        <div class="tab" onclick="openTab('constant')">🏛️ 상시 패키지</div>
+        <div class="tab" onclick="openTab('calc')">📊 분석</div>
+        <div class="tab" onclick="openTab('settings')">⚙️ 설정</div>
     </div>
 
     <div id="preset" class="card active">
-        <p class="small-text" style="margin-bottom: 15px;">목록에서 패키지를 선택하면 수량이 자동으로 입력됩니다.</p>
+        <p class="small-text">매주 업데이트되는 한정/이벤트 패키지입니다.</p>
         <div id="released-list"></div>
+    </div>
+
+    <div id="constant" class="card">
+        <p class="small-text">데일리/월간 등 꾸준히 판매되는 패키지입니다.</p>
+        <div id="constant-list"></div>
     </div>
 
     <div id="calc" class="card">
@@ -70,11 +76,7 @@
                 <span class="unit">원</span>
             </div>
         </div>
-        <div class="list-header">
-            <div class="header-spacer"></div>
-            <div class="header-title">수량</div>
-        </div>
-        <div id="item-inputs"></div>
+        <div id="item-inputs" style="margin-top:10px;"></div>
         <button class="btn btn-main" onclick="calculate()">효율 계산하기</button>
         <div id="result">
             <div class="small-text">이 패키지의 1,000원당 가치</div>
@@ -85,10 +87,6 @@
 
     <div id="settings" class="card">
         <p class="small-text">무료 엘리프(1:1)를 기준으로 가치를 설정합니다.</p>
-        <div class="list-header">
-            <div class="header-spacer"></div>
-            <div class="header-title">엘리프 가치</div>
-        </div>
         <div id="settings-list"></div>
         <button class="btn btn-sub" onclick="copyShareLink()">🔗 설정 공유 링크 복사</button>
         <div class="reset-container"><button class="btn-reset" onclick="resetConfig()">⚠️ 기본 설정으로 초기화</button></div>
@@ -96,12 +94,42 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'trickcal_calc_v7_final';
-    
+    const STORAGE_KEY = 'trickcal_calc_v9_stable';
+
+    // 출시 패키지 (이벤트성)
     const releasedPackages = [
         { name: "아멜리아(R41)의 기쁨 패키지", price: 3300, contents: { p_elif: 100, kcandy: 200, manual: 800, nuru: 3, food_blue: 5 } },
         { name: "아멜리아(R41)의 선포 패키지", price: 3300, contents: { p_elif: 100, scandy: 100, light_box: 200, nuru: 3, food_blue: 5 } },
         { name: "아멜리아(R41)의 희열 패키지", price: 9900, contents: { p_elif: 300, t_apostle: 10, t_card: 10 } }
+    ];
+
+    // [상시 패키지] 요청하신 리스트로 업데이트 완료
+    const constantPackages = [
+        { 
+            name: "데일리 엘리프", 
+            price: 9900, 
+            contents: { p_elif: 1500, f_elif: 2000, manual: 2139, r_low: 124 } 
+        },
+        { 
+            name: "데일리 별사탕", 
+            price: 9900, 
+            contents: { scandy: 4460 } 
+        },
+        { 
+            name: "데일리 왕사탕", 
+            price: 5500, 
+            contents: { kcandy: 4850, nuru: 31 } 
+        },
+        { 
+            name: "월간 크레파스 패키지", 
+            price: 29500, 
+            contents: { p_elif: 900, gold: 200, crayon_highest: 4 } 
+        },
+        { 
+            name: "월간 교단 증명서 패키지", 
+            price: 49500, 
+            contents: { p_elif: 1500, f_elif: 1500, cert: 500 } 
+        }
     ];
 
     const defaultConfig = {
@@ -144,25 +172,13 @@
         
         if(tabId === 'calc') renderCalc();
         if(tabId === 'settings') renderSettings();
-        if(tabId === 'preset') renderReleasedPackages();
+        if(tabId === 'preset') renderPackages('released-list', releasedPackages);
+        if(tabId === 'constant') renderPackages('constant-list', constantPackages);
     }
 
-    // 분석 탭의 입력값을 메모리에 실시간 저장
-    function saveCurrentInputs() {
-        config.items.forEach(item => {
-            const input = document.getElementById(`cnt-${item.id}`);
-            if(input) item.count = input.value;
-        });
-    }
-
-    function saveCurrentPrice() {
-        const priceInput = document.getElementById('pkg-price');
-        if(priceInput) config.price = priceInput.value;
-    }
-
-    function renderReleasedPackages() {
-        const list = document.getElementById('released-list');
-        list.innerHTML = releasedPackages.map((pkg, index) => {
+    function renderPackages(containerId, packageList) {
+        const list = document.getElementById(containerId);
+        list.innerHTML = packageList.map((pkg, index) => {
             const summary = Object.entries(pkg.contents).map(([id, count]) => {
                 const item = config.items.find(i => i.id === id);
                 return `${item ? item.name : id} x${count}`;
@@ -173,20 +189,33 @@
                     <span class="pkg-name">${pkg.name}</span>
                     <span class="pkg-price-tag">${pkg.price.toLocaleString()}원</span>
                     <div class="pkg-items">${summary}</div>
-                    <button class="apply-btn" onclick="applyPackage(${index})">이 구성으로 분석하기</button>
+                    <button class="apply-btn" onclick="applyPackage('${containerId}', ${index})">이 구성으로 분석하기</button>
                 </div>
             `;
         }).join('');
     }
 
-    function applyPackage(index) {
-        const pkg = releasedPackages[index];
+    function applyPackage(sourceId, index) {
+        const list = sourceId === 'released-list' ? releasedPackages : constantPackages;
+        const pkg = list[index];
         config.price = pkg.price;
         config.items.forEach(item => {
             item.count = pkg.contents[item.id] || "";
         });
         openTab('calc');
         calculate();
+    }
+
+    function saveCurrentInputs() {
+        config.items.forEach(item => {
+            const input = document.getElementById(`cnt-${item.id}`);
+            if(input) item.count = input.value;
+        });
+    }
+
+    function saveCurrentPrice() {
+        const priceInput = document.getElementById('pkg-price');
+        if(priceInput) config.price = priceInput.value;
     }
 
     function saveAllSettings() {
@@ -214,7 +243,7 @@
                 });
             }
         }
-        renderReleasedPackages();
+        renderPackages('released-list', releasedPackages);
     }
 
     function resetConfig() {
@@ -240,7 +269,6 @@
                 </div>
                 <div class="input-wrapper">
                     <input type="number" id="${inputId}" ${valueAttr} step="0.001" ${onInput} ${readonly} placeholder="0">
-                    <span class="unit"></span>
                 </div>
             </div>
         `;
@@ -258,14 +286,12 @@
     function calculate() {
         const price = parseFloat(document.getElementById('pkg-price').value);
         if(!price || price <= 0) { alert("패키지 가격을 입력해주세요."); return; }
-
         let totalElif = 0;
         config.items.forEach(item => {
             const input = document.getElementById(`cnt-${item.id}`);
             const count = input ? parseFloat(input.value) : 0;
             totalElif += (isNaN(count) ? 0 : count) * item.val;
         });
-
         const ratePer1000 = (totalElif / price) * 1000;
         document.getElementById('result').style.display = 'block';
         document.getElementById('res-rate').innerText = `${ratePer1000.toFixed(1)}개`;
