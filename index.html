@@ -328,9 +328,18 @@ input[readonly] {
     }
 
     function saveSettings() {
-        config.items.forEach(item => { const input = document.getElementById(`val-${item.id}`); if(input) item.val = parseFloat(input.value) || 0; });
+        config.items.forEach(item => { 
+            const input = document.getElementById(`val-${item.id}`); 
+            if(input) item.val = parseFloat(input.value) || 0; 
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-        filterReleased(); renderConstantPackages();
+        
+        // 1. 출시/상시 패키지 리스트의 효율 점수 갱신
+        filterReleased(); 
+        renderConstantPackages();
+        
+        // 2. [추가] 현재 분석 탭의 계산 결과도 즉시 갱신
+        calculate(); 
     }
 
     function renderConstantPackages() {
@@ -385,6 +394,7 @@ input[readonly] {
 </script>
 </body>
 </html>
+
 
 
 
