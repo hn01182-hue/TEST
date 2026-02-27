@@ -298,7 +298,6 @@ input[readonly] {
             </div>
             <div class="input-wrapper">
                 <input type="number" id="cnt-${item.id}" value="${item.count}" oninput="saveInputs()" 
-                ${(item.id === 'f_elif' && item.fixed) ? 'readonly' : ''}>
             </div>
         </div>`).join('');
 }
@@ -381,5 +380,6 @@ input[readonly] {
 </script>
 </body>
 </html>
+
 
 
