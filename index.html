@@ -297,7 +297,7 @@ input[readonly] {
                 <span class="item-name">${item.name}</span>
             </div>
             <div class="input-wrapper">
-                <input type="number" id="cnt-${item.id}" value="${item.count}" oninput="saveInputs()" 
+                <input type="number" id="cnt-${item.id}" value="${item.count}" oninput="saveInputs()">
             </div>
         </div>`).join('');
 }
@@ -380,6 +380,7 @@ input[readonly] {
 </script>
 </body>
 </html>
+
 
 
 
