@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>트릭컬 효율 계산기</title>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -87,6 +88,11 @@ input[readonly] {
 
     <div id="preset" class="card active">
         <div class="filter-container">
+<div id="chart-container" style="display:none; background:rgba(255,255,255,0.9); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--primary);">
+    <p style="margin:0 0 10px 0; font-size:0.85em; font-weight:bold; color:#555;">📊 선택 사도 패키지 효율 비교 (회색선: 은총 패키지 기준(201))</p>
+    <div id="chart-wrapper"><canvas id="releasedChart"></canvas>
+    </div>
+</div>
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="pkg-search" class="search-input" placeholder="패키지 또는 사도 검색..." oninput="filterReleased()">
                 <select id="apostle-select" class="apostle-select" onchange="filterReleased()">
@@ -239,6 +245,9 @@ input[readonly] {
             return (order === 'asc') ? vA - vB : vB - vA;
         });
         renderPackageList('released-list', filtered);
+
+renderPackageList('released-list', filtered); // 리스트 먼저 그리고
+    drawReleasedChart(filtered);
     }
 
     function calculateScore(contents, price) {
@@ -345,14 +354,19 @@ input[readonly] {
     function renderConstantPackages() {
         const listDiv = document.getElementById('constant-list');
         listDiv.innerHTML = constantPackages.map((pkg, index) => {
+            // 💡 상시 패키지의 효율 점수를 계산합니다.
+            const score = calculateScore(pkg.contents, pkg.price).toFixed(1);
+            
             const summary = Object.entries(pkg.contents).map(([id, count]) => {
                 const item = config.items.find(i => i.id === id);
                 return `${item ? item.name : id} x${count}`;
             }).join(', ');
+
             return `
                 <div class="pkg-card">
                     <span class="pkg-name">${pkg.name}</span>
                     <span class="pkg-price-tag">${pkg.price.toLocaleString()}원</span>
+                    <div><span class="eff-badge">효율 점수 : ${score}</span></div>
                     <div class="pkg-items">${summary}</div>
                     <button class="apply-btn" onclick="applyPackageData('constant-list', ${index})">이 구성으로 분석하기</button>
                 </div>`;
@@ -386,7 +400,99 @@ input[readonly] {
         const url = `${window.location.origin}${window.location.pathname}?v=${data}`;
         navigator.clipboard.writeText(url).then(() => alert("설정 링크 복사 완료!"));
     }
+let releasedChartObj = null;
 
+function drawReleasedChart(filteredData) {
+    const canvas = document.getElementById('releasedChart');
+    const container = document.getElementById('chart-container');
+    const wrapper = document.getElementById('chart-wrapper'); // 💡 wrapper 추가
+    const selectedApostle = document.getElementById('apostle-select').value;
+
+    if (selectedApostle === "all" || filteredData.length === 0) {
+        if(container) container.style.display = 'none';
+        return;
+    }
+
+    if(container) container.style.display = 'block';
+
+    // 💡 데이터 개수에 따라 높이 계산 (1개당 40px 정도로 넉넉히)
+    const dynamicHeight = Math.max(200, filteredData.length * 40); 
+    
+    // 💡 부모 wrapper의 높이를 직접 변경하여 캔버스가 늘어날 공간을 만듭니다.
+    wrapper.style.height = dynamicHeight + 'px';
+    canvas.style.height = dynamicHeight + 'px';
+
+    const ctx = canvas.getContext('2d');
+
+    // 은총 패키지 기준점 계산
+    const gracePkg = constantPackages.find(p => p.name === "은총 패키지") || {price: 99000, contents: {p_elif: 6000}};
+    const graceScore = calculateScore(gracePkg.contents, gracePkg.price);
+
+    const labels = filteredData.map(p => p.name);
+    const scores = filteredData.map(p => calculateScore(p.contents, p.price));
+
+    if (releasedChartObj) releasedChartObj.destroy();
+
+    releasedChartObj = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: scores,
+                backgroundColor: scores.map(s => s >= graceScore ? 'rgba(125, 178, 73, 0.7)' : 'rgba(233, 30, 99, 0.7)'),
+                borderColor: scores.map(s => s >= graceScore ? '#7db249' : '#e91e63'),
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false, // 💡 반드시 false여야 높이 조절이 먹힙니다.
+            layout: {
+                padding: { bottom: 20 } // 하단 수치 글자가 잘리지 않게 여백 추가
+            },
+            plugins: {
+                legend: { display: false },
+                // 수직 기준선(은총 패키지) 그리기
+                beforeDraw: (chart) => {
+                    const {ctx, chartArea: {top, bottom, left, right}, scales: {x}} = chart;
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.setLineDash([5, 5]);
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x.getPixelForValue(graceScore), top);
+                    ctx.lineTo(x.getPixelForValue(graceScore), bottom);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { display: false } },
+                y: { grid: { display: false } }
+            }
+        },
+        // 기준선을 그리기 위한 커스텀 플러그인
+        plugins: [{
+            afterDraw: chart => {
+                const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+                const xPos = x.getPixelForValue(graceScore);
+                if (xPos >= chart.chartArea.left && xPos <= chart.chartArea.right) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#888';
+                    ctx.setLineDash([5, 5]);
+                    ctx.moveTo(xPos, top);
+                    ctx.lineTo(xPos, bottom);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }]
+    });
+}
     window.onload = function() {
         loadAll(); applyRandomBackground();
         loadReleasedPackages(); renderConstantPackages();
@@ -394,7 +500,6 @@ input[readonly] {
 </script>
 </body>
 </html>
-
 
 
 
