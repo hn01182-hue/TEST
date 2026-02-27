@@ -273,7 +273,7 @@ input[readonly] {
     function applyPackageData(sourceId, pkgId) {
         const pkg = (sourceId === 'released-list') ? dbPackages.find(p => p.id === pkgId) : constantPackages[pkgId];
         if(!pkg) return;
-        document.body.style.backgroundImage = "url('https://i.postimg.cc/L5djnxms/197cffe21bd4f8151.gif')";
+        document.body.style.backgroundImage = "url('images/쌀이드.gif')";
         config.price = pkg.price;
         config.items.forEach(item => { item.count = pkg.contents[item.id] || ""; });
         openTab('calc'); calculate();
@@ -362,7 +362,12 @@ input[readonly] {
     }
 
     function applyRandomBackground() {
-        const bgs = ['https://i.postimg.cc/mDTtqKZg/1772195425.webp', 'https://i.postimg.cc/W3shKxpb/1772195425_(2).webp'];
+        const bgs = [
+            'images/배경1.webp', 
+            'images/배경2.webp',
+            'images/배경3.webp',
+            'images/배경4.webp'
+        ];
         document.body.style.backgroundImage = `url('${bgs[Math.floor(Math.random()*bgs.length)]}')`;
     }
 
@@ -380,6 +385,7 @@ input[readonly] {
 </script>
 </body>
 </html>
+
 
 
 
