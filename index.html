@@ -91,7 +91,7 @@
     </div>
 
     <div id="settings" class="card">
-        <p class="small-text">무료 엘리프(1:1)를 기준으로 가치를 설정합니다.</p>
+        <p class="small-text">무료 엘리프를 기준으로 가치를 설정합니다.</p>
         <div id="settings-list"></div>
         <button class="btn btn-sub" onclick="copyShareLink()">🔗 설정 공유 링크 복사</button>
         <div class="reset-container"><button class="btn-reset" onclick="resetConfig()">⚠️ 기본 설정으로 초기화</button></div>
@@ -154,16 +154,16 @@
             { id: 'thumbs', name: '따봉', val: 20, icon: 'https://i.postimg.cc/pTnpx9LZ/따봉.webp', count: "" },
             { id: 'kcandy', name: '왕사탕', val: 0.5, icon: 'https://i.postimg.cc/KjS4YZK2/왕사탕.webp', count: "" },
             { id: 'scandy', name: '별사탕', val: 2, icon: 'https://i.postimg.cc/905zfWDY/별사탕.webp', count: "" },
-            { id: 'crayon_low', name: '하급 크레파스', val: 10, icon: 'https://i.postimg.cc/hvWhGSJR/일반크레파스.webp', count: "" },
-            { id: 'crayon_mid', name: '중급 크레파스', val: 50, icon: 'https://i.postimg.cc/gJ6ndw2J/파란크레파스.webp', count: "" },
-            { id: 'crayon_high', name: '상급 크레파스', val: 200, icon: 'https://i.postimg.cc/L5KhsHJk/보라크레파스.webp', count: "" },
+            { id: 'crayon_low', name: '하급 크레파스', val: 0, icon: 'https://i.postimg.cc/hvWhGSJR/일반크레파스.webp', count: "" },
+            { id: 'crayon_mid', name: '중급 크레파스', val: 0, icon: 'https://i.postimg.cc/gJ6ndw2J/파란크레파스.webp', count: "" },
+            { id: 'crayon_high', name: '상급 크레파스', val: 60, icon: 'https://i.postimg.cc/L5KhsHJk/보라크레파스.webp', count: "" },
             { id: 'crayon_highest', name: '최상급 크레파스', val: 668, icon: 'https://i.postimg.cc/j5JLKWSH/황금크레파스.webp', count: "" },
             { id: 'gold', name: '골드 (1만 단위)', val: 4, icon: 'https://i.postimg.cc/k4tB9Vgw/골드.webp', count: "" },
             { id: 'cert', name: '교환 증명서', val: 8.5, icon: 'https://i.postimg.cc/LXZnRq8V/교환증명서.webp', count: "" },
-            { id: 'spec_ticket', name: '특별 모집권', val: 0, icon: '', count: "" },
-            { id: 'adv_ticket', name: '초고급 모집권', val: 0, icon: '', count: "" },
-            { id: 'select_ticket', name: '일반 사도 선택권', val: 0, icon: '', count: "" },
-            { id: 'attr_ticket', name: '속성 모집권', val: 0, icon: '', count: "" },
+            { id: 'spec_ticket', name: '특별 모집권', val: 130, icon: '', count: "" },
+            { id: 'adv_ticket', name: '초고급 모집권', val: 260, icon: '', count: "" },
+            { id: 'select_ticket', name: '일반 사도 선택권', val: 2550, icon: '', count: "" },
+            { id: 'attr_ticket', name: '속성 모집권', val: 260, icon: '', count: "" },
             { id: 'light_box', name: '무작위 빛 상자', val: 0, icon: '', count: "" },
             { id: 'food_blue', name: '요리(파랑)', val: 0, icon: '', count: "" },
             { id: 'food_purple', name: '요리(보라)', val: 0, icon: '', count: "" },
@@ -323,6 +323,7 @@
 </script>
 </body>
 </html>
+
 
 
 
