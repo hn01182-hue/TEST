@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트릭컬 효율 계산기</title>
+    <style>
+        :root { --primary: #7db249; --bg: #fdf6e3; --card: #ffffff; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); padding: 20px; color: #444; }
+        .container { max-width: 500px; margin: auto; }
+        
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab { flex: 1; padding: 12px 8px; text-align: center; background: #ddd; cursor: pointer; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 0.85em; }
+        .tab.active { background: var(--card); color: var(--primary); border-bottom: 3px solid var(--primary); }
+        
+        .card { background: var(--card); padding: 20px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: none; }
+        .card.active { display: block; }
+
+        .pkg-card { border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #fafafa; }
+        .pkg-name { font-weight: 800; color: #333; margin-bottom: 5px; display: block; }
+        .pkg-price-tag { color: var(--primary); font-weight: bold; font-size: 0.9em; }
+        .pkg-items { font-size: 0.8em; color: #777; margin-top: 8px; line-height: 1.4; }
+        .apply-btn { margin-top: 10px; width: 100%; padding: 8px; background: #fff; border: 1.5px solid var(--primary); color: var(--primary); border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .apply-btn:hover { background: var(--primary); color: #fff; }
+
+        .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .item-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .item-icon { width: 32px; height: 32px; object-fit: contain; background: #eee; border-radius: 6px; flex-shrink: 0; }
+        .item-name { font-size: 0.95em; font-weight: 600; }
+        .input-wrapper { display: flex; align-items: center; gap: 5px; width: 150px; justify-content: flex-end; }
+        input { width: 120px; padding: 8px; border: 1.5px solid #eee; border-radius: 6px; text-align: right; font-size: 14px; box-sizing: border-box; }
+        input:read-only { background-color: #f9f9f9; color: #aaa; border-color: #eee; cursor: not-allowed; }
+        .unit { font-size: 0.85em; font-weight: bold; color: #666; width: 25px; text-align: left; }
+
+        .list-header { display: flex; gap: 10px; margin-bottom: 5px; margin-top: 15px; }
+        .header-spacer { flex: 1; }
+        .header-title { width: 120px; text-align: center; margin-right: 30px; font-size: 0.75em; font-weight: bold; color: #999; letter-spacing: 1px; }
+
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-sub { background: #f0f0f0; color: #666; font-size: 0.85em; }
+        
+        .reset-container { display: flex; justify-content: flex-end; margin-top: 20px; }
+        .btn-reset { padding: 8px 15px; background: #ffebf0; color: #e91e63; font-size: 0.8em; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+
+        #result { margin-top: 20px; padding: 20px; border-radius: 12px; text-align: center; display: none; background: #f8f9fa; border: 1px solid #e9ecef; }
+        .result-val { font-size: 2.2em; font-weight: 800; color: var(--primary); margin: 5px 0; }
+        .small-text { font-size: 0.8em; color: #888; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <div class="tab active" onclick="openTab('preset')">🎁 출시 패키지</div>
+        <div class="tab" onclick="openTab('calc')">📊 패키지 분석</div>
+        <div class="tab" onclick="openTab('settings')">⚙️ 가치 설정</div>
+    </div>
+
+    <div id="preset" class="card active">
+        <p class="small-text" style="margin-bottom: 15px;">목록에서 패키지를 선택하면 수량이 자동으로 입력됩니다.</p>
+        <div id="released-list"></div>
+    </div>
+
+    <div id="calc" class="card">
+        <div class="row">
+            <div class="item-info"><span class="item-name" style="font-size: 1.1em; color: var(--primary);">📦 패키지 가격</span></div>
+            <div class="input-wrapper">
+                <input type="number" id="pkg-price" placeholder="0" oninput="saveCurrentPrice()">
+                <span class="unit">원</span>
+            </div>
+        </div>
+        <div class="list-header">
+            <div class="header-spacer"></div>
+            <div class="header-title">수량</div>
+        </div>
+        <div id="item-inputs"></div>
+        <button class="btn btn-main" onclick="calculate()">효율 계산하기</button>
+        <div id="result">
+            <div class="small-text">이 패키지의 1,000원당 가치</div>
+            <div class="result-val" id="res-rate">0개</div>
+            <div id="res-total" style="font-size: 0.9em; color: #666;">(총 엘리프 환산: 0개)</div>
+        </div>
+    </div>
+
+    <div id="settings" class="card">
+        <p class="small-text">무료 엘리프(1:1)를 기준으로 가치를 설정합니다.</p>
+        <div class="list-header">
+            <div class="header-spacer"></div>
+            <div class="header-title">엘리프 가치</div>
+        </div>
+        <div id="settings-list"></div>
+        <button class="btn btn-sub" onclick="copyShareLink()">🔗 설정 공유 링크 복사</button>
+        <div class="reset-container"><button class="btn-reset" onclick="resetConfig()">⚠️ 기본 설정으로 초기화</button></div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'trickcal_calc_v7_final';
+    
+    const releasedPackages = [
+        { name: "아멜리아(R41)의 기쁨 패키지", price: 3300, contents: { p_elif: 100, kcandy: 200, manual: 800, nuru: 3, food_blue: 5 } },
+        { name: "아멜리아(R41)의 선포 패키지", price: 3300, contents: { p_elif: 100, scandy: 100, light_box: 200, nuru: 3, food_blue: 5 } },
+        { name: "아멜리아(R41)의 희열 패키지", price: 9900, contents: { p_elif: 300, t_apostle: 10, t_card: 10 } }
+    ];
+
+    const defaultConfig = {
+        price: 0,
+        items: [
+            { id: 'p_elif', name: '유료 엘리프', val: 2, icon: 'https://i.postimg.cc/VvQ5NYJK/엘리프.webp', count: "" },
+            { id: 'f_elif', name: '무료 엘리프', val: 1, fixed: true, icon: 'https://i.postimg.cc/VvQ5NYJK/엘리프.webp', count: "" },
+            { id: 'thumbs', name: '따봉', val: 20, icon: 'https://i.postimg.cc/pTnpx9LZ/따봉.webp', count: "" },
+            { id: 'kcandy', name: '왕사탕', val: 0.5, icon: 'https://i.postimg.cc/KjS4YZK2/왕사탕.webp', count: "" },
+            { id: 'scandy', name: '별사탕', val: 2, icon: 'https://i.postimg.cc/905zfWDY/별사탕.webp', count: "" },
+            { id: 'crayon_low', name: '하급 크레파스', val: 10, icon: 'https://i.postimg.cc/hvWhGSJR/일반크레파스.webp', count: "" },
+            { id: 'crayon_mid', name: '중급 크레파스', val: 50, icon: 'https://i.postimg.cc/gJ6ndw2J/파란크레파스.webp', count: "" },
+            { id: 'crayon_high', name: '상급 크레파스', val: 200, icon: 'https://i.postimg.cc/L5KhsHJk/보라크레파스.webp', count: "" },
+            { id: 'crayon_highest', name: '최상급 크레파스', val: 668, icon: 'https://i.postimg.cc/j5JLKWSH/황금크레파스.webp', count: "" },
+            { id: 'gold', name: '골드 (1만 단위)', val: 4, icon: 'https://i.postimg.cc/k4tB9Vgw/골드.webp', count: "" },
+            { id: 'cert', name: '교환 증명서', val: 8.5, icon: 'https://i.postimg.cc/LXZnRq8V/교환증명서.webp', count: "" },
+            { id: 'spec_ticket', name: '특별 모집권', val: 0, icon: '', count: "" },
+            { id: 'adv_ticket', name: '초고급 모집권', val: 0, icon: '', count: "" },
+            { id: 'select_ticket', name: '일반 사도 선택권', val: 0, icon: '', count: "" },
+            { id: 'light_box', name: '무작위 빛 상자', val: 0, icon: '', count: "" },
+            { id: 'food_blue', name: '요리(파랑)', val: 0, icon: '', count: "" },
+            { id: 'food_purple', name: '요리(보라)', val: 0, icon: '', count: "" },
+            { id: 't_apostle', name: '사도뽑기권', val: 60, icon: 'https://i.postimg.cc/PJsNqtC4/사도뽑기.webp', count: "" },
+            { id: 't_card', name: '카드뽑기권', val: 40, icon: 'https://i.postimg.cc/ZqQC1P45/카드뽑기.webp', count: "" },
+            { id: 'nuru', name: '누루링', val: 40, icon: '', count: "" },
+            { id: 'manual', name: '장비의 정석', val: 0.125, icon: 'https://i.postimg.cc/XqfqGT5z/장비의_정석.webp', count: "" },
+            { id: 'r_low', name: '하급 제련석', val: 3, icon: '', count: "" },
+            { id: 'r_mid', name: '중급 제련석', val: 6, icon: '', count: "" },
+            { id: 'r_high', name: '상급 제련석', val: 13, icon: '', count: "" }
+        ]
+    };
+
+    let config = JSON.parse(JSON.stringify(defaultConfig));
+
+    function openTab(tabId) {
+        document.querySelectorAll('.tab, .card').forEach(el => el.classList.remove('active'));
+        const targetTab = document.querySelector(`.tab[onclick="openTab('${tabId}')"]`);
+        if(targetTab) targetTab.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        
+        if(tabId === 'calc') renderCalc();
+        if(tabId === 'settings') renderSettings();
+        if(tabId === 'preset') renderReleasedPackages();
+    }
+
+    // 분석 탭의 입력값을 메모리에 실시간 저장
+    function saveCurrentInputs() {
+        config.items.forEach(item => {
+            const input = document.getElementById(`cnt-${item.id}`);
+            if(input) item.count = input.value;
+        });
+    }
+
+    function saveCurrentPrice() {
+        const priceInput = document.getElementById('pkg-price');
+        if(priceInput) config.price = priceInput.value;
+    }
+
+    function renderReleasedPackages() {
+        const list = document.getElementById('released-list');
+        list.innerHTML = releasedPackages.map((pkg, index) => {
+            const summary = Object.entries(pkg.contents).map(([id, count]) => {
+                const item = config.items.find(i => i.id === id);
+                return `${item ? item.name : id} x${count}`;
+            }).join(', ');
+
+            return `
+                <div class="pkg-card">
+                    <span class="pkg-name">${pkg.name}</span>
+                    <span class="pkg-price-tag">${pkg.price.toLocaleString()}원</span>
+                    <div class="pkg-items">${summary}</div>
+                    <button class="apply-btn" onclick="applyPackage(${index})">이 구성으로 분석하기</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function applyPackage(index) {
+        const pkg = releasedPackages[index];
+        config.price = pkg.price;
+        config.items.forEach(item => {
+            item.count = pkg.contents[item.id] || "";
+        });
+        openTab('calc');
+        calculate();
+    }
+
+    function saveAllSettings() {
+        config.items.forEach(item => {
+            if (!item.fixed) {
+                const input = document.getElementById(`val-${item.id}`);
+                if(input) item.val = parseFloat(input.value) || 0;
+            }
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    }
+
+    function loadAll() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const data = urlParams.get('v');
+        if(data) {
+            try { config = JSON.parse(decodeURIComponent(data)); } catch(e) {}
+        } else {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if(saved) {
+                const parsedSaved = JSON.parse(saved);
+                config.items = config.items.map(item => {
+                    const savedItem = parsedSaved.items.find(si => si.id === item.id);
+                    return savedItem ? { ...item, val: savedItem.val } : item;
+                });
+            }
+        }
+        renderReleasedPackages();
+    }
+
+    function resetConfig() {
+        if(confirm("모든 설정을 기본값으로 초기화하시겠습니까?")) {
+            localStorage.removeItem(STORAGE_KEY);
+            config = JSON.parse(JSON.stringify(defaultConfig));
+            renderSettings();
+            alert("초기화되었습니다.");
+        }
+    }
+
+    function createRowHtml(item, type) {
+        const inputId = type === 'val' ? `val-${item.id}` : `cnt-${item.id}`;
+        const valueAttr = type === 'val' ? `value="${item.val}"` : `value="${item.count || ''}"`;
+        const onInput = type === 'val' ? 'oninput="saveAllSettings()"' : 'oninput="saveCurrentInputs()"';
+        const readonly = (type === 'val' && item.fixed) ? 'readonly' : '';
+
+        return `
+            <div class="row">
+                <div class="item-info">
+                    <img src="${item.icon || 'https://via.placeholder.com/32'}" class="item-icon">
+                    <span class="item-name">${item.name}</span>
+                </div>
+                <div class="input-wrapper">
+                    <input type="number" id="${inputId}" ${valueAttr} step="0.001" ${onInput} ${readonly} placeholder="0">
+                    <span class="unit"></span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSettings() {
+        document.getElementById('settings-list').innerHTML = config.items.map(item => createRowHtml(item, 'val')).join('');
+    }
+
+    function renderCalc() {
+        document.getElementById('pkg-price').value = config.price || "";
+        document.getElementById('item-inputs').innerHTML = config.items.map(item => createRowHtml(item, 'cnt')).join('');
+    }
+
+    function calculate() {
+        const price = parseFloat(document.getElementById('pkg-price').value);
+        if(!price || price <= 0) { alert("패키지 가격을 입력해주세요."); return; }
+
+        let totalElif = 0;
+        config.items.forEach(item => {
+            const input = document.getElementById(`cnt-${item.id}`);
+            const count = input ? parseFloat(input.value) : 0;
+            totalElif += (isNaN(count) ? 0 : count) * item.val;
+        });
+
+        const ratePer1000 = (totalElif / price) * 1000;
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('res-rate').innerText = `${ratePer1000.toFixed(1)}개`;
+        document.getElementById('res-total').innerText = `(총 엘리프 환산: ${totalElif.toLocaleString()}개)`;
+    }
+
+    function copyShareLink() {
+        const data = encodeURIComponent(JSON.stringify(config));
+        const url = `${window.location.origin}${window.location.pathname}?v=${data}`;
+        navigator.clipboard.writeText(url).then(() => alert("링크가 복사되었습니다."));
+    }
+
+    window.onload = loadAll;
+</script>
+</body>
+</html>
