@@ -11,7 +11,30 @@
     
     <style>
         :root { --primary: #7db249; --bg: #fdf6e3; --card: #ffffff; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); padding: 20px; color: #444; }
+       body {
+    		font-family: 'Pretendard', sans-serif;
+    
+  		  /* 배경 이미지 설정 */
+   		 background-image: url('https://i.postimg.cc/Xq4NX5B5/1772191713.png'); 
+   		 background-size: cover;      /* 화면에 꽉 차게 */
+   		 background-position: center; /* 가운데 정렬 */
+   		 background-attachment: fixed; /* 스크롤해도 배경 고정 */
+   		 background-repeat: no-repeat;
+    
+    padding: 20px;
+    color: #444;
+    margin: 0;
+}
+
+/* 2. (추가 팁) 계산기 박스를 살짝 투명하게 만들면 더 예쁩니다. .card 부분도 찾아보세요. */
+.card {
+    background: rgba(255, 255, 255, 0.9); /* 90% 투명한 하얀색 */
+    backdrop-filter: blur(5px);          /* 배경을 살짝 흐리게 해서 글자 잘 보이게 */
+    padding: 20px;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: none;
+}
         .container { max-width: 500px; margin: auto; }
         
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; }
@@ -323,7 +346,6 @@
 </script>
 </body>
 </html>
-
 
 
 
