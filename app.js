@@ -192,7 +192,6 @@ function renderPackageList(containerId, list) {
         const url = `${window.location.origin}${window.location.pathname}?v=${data}`;
         navigator.clipboard.writeText(url).then(() => alert("설정 링크 복사 완료!"));
     }
-let releasedChartObj = null;
 
 function drawReleasedChart(filteredData) {
     const canvas = document.getElementById('releasedChart');
