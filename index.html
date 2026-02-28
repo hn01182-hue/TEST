@@ -80,8 +80,8 @@ input[readonly] {
 
 <div class="container">
     <div class="tabs">
-        <div class="tab active" onclick="openTab('preset')">🎁 출시 패키지</div>
-        <div class="tab" onclick="openTab('constant')">🏛️ 상시 패키지</div>
+        <div class="tab active" onclick="openTab('preset')">🎁 주간 패키지</div>
+        <div class="tab" onclick="openTab('constant')">🏛️ 데일리/패스/은총</div>
         <div class="tab" onclick="openTab('calc')">📊 분석</div>
         <div class="tab" onclick="openTab('settings')">⚙️ 설정</div>
     </div>
@@ -162,7 +162,9 @@ input[readonly] {
         { name: "데일리 왕사탕", price: 5500, contents: { kcandy: 4850, nuru: 31 } },
         { name: "월간 크레파스 패키지", price: 29500, contents: { p_elif: 900, gold: 200, crayon_highest: 4 } },
         { name: "월간 교단 증명서 패키지", price: 49500, contents: { p_elif: 1500, f_elif: 1500, cert: 500 } },
-        { name: "은총 패키지", price: 99000, contents: { p_elif: 6000, crayon_highest: 10, scandy: 500, kcandy: 500 } }
+        { name: "은총 패키지", price: 99000, contents: { p_elif: 6000, crayon_highest: 10, scandy: 500, kcandy: 500 } },
+        { name: "트릭컬 패스 (기본)", price: 11000, contents: {"gold":66,"p_elif":700,"t_card":6,"t_apostle":6,"kcandy":300,"scandy":200,"m_high":10,"m_mid":40,"m_low":60,"r_high":3,"r_mid":6,"r_low":9,"crayon_high":3,"crayon_highest":2} },
+        { name: "트릭컬 패스 (업그레이드)", price: 13000, contents: { p_elif: 1800, thumbs: 30} }
     ];
 
     // [전체 부활] 아이템 32종 풀세트
@@ -500,6 +502,7 @@ function drawReleasedChart(filteredData) {
 </script>
 </body>
 </html>
+
 
 
 
